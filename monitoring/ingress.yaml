@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  labels:
+    app: grafana-monitoring
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: grafana
+          servicePort: 80
+    host: grafana.multitenant.nuxeo.com
+  tls: 
+    - hosts:
+      - grafana.multitenant.nuxeo.com
+      secretName: static-wildcard-tls

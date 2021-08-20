@@ -1,0 +1,145 @@
+{{- $credentials := ternary "" (printf "%s%s" .Values.mongodb.credentials "@") (empty .Values.mongodb.credentials) -}}
+{{- range splitList "," (include "nuxeo.nodeTypes" .) }}
+{{- $nuxeoNodeType := . -}}
+{{- $nuxeoFullnameSuffix := ternary "" (printf "-%s" $nuxeoNodeType) (eq $nuxeoNodeType "single") -}}
+{{- $workerNode := (eq $nuxeoNodeType "worker") -}}
+{{- with $ }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nuxeo.fullname" . }}-conf{{ $nuxeoFullnameSuffix }}
+  labels:
+    app: {{ template "nuxeo.fullname" . }}
+    nuxeoNode: {{ $nuxeoNodeType }}
+    tier: {{ ternary "backend" "frontend" $workerNode }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: config
+data:
+  00-nuxeo.conf: |
+    # Helm chart properties
+    nuxeo.virtual.host={{ .Values.virtualHost  }}
+    nuxeo.stream.work.log.codec=avro
+    nuxeo.stream.audit.log.codec=avro
+    nuxeo.stream.pubsub.log.codec=avro
+{{- if .Values.mongodb.enabled }}
+    nuxeo.append.templates.mongodb=mongodb
+{{- if .Values.mongodb.url }}
+    nuxeo.mongodb.server={{ .Values.mongodb.protocol }}://{{ $credentials }}{{ .Values.mongodb.url }}
+{{- else}}
+    nuxeo.mongodb.server={{ .Values.mongodb.protocol }}://{{ $credentials }}{{ .Values.mongodb.host }}:{{ .Values.mongodb.port }}
+{{- end }}
+    nuxeo.mongodb.dbname={{ template "nuxeo.fullname" . }}
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+    nuxeo.append.templates.postgresql=postgresql
+    nuxeo.db.host={{ .Values.postgresql.host }}
+    nuxeo.db.port={{ .Values.postgresql.port }}
+    nuxeo.db.name={{ template "nuxeo.fullname" . }}
+    nuxeo.db.user={{ .Values.postgresql.username }}
+    nuxeo.db.password={{ .Values.postgresql.password }}
+{{- end }}
+{{- if .Values.elasticsearch.enabled }}
+    elasticsearch.addressList={{ .Values.elasticsearch.protocol }}://{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}
+    elasticsearch.clusterName={{ .Values.elasticsearch.clusterName }}
+    elasticsearch.indexName={{ template "nuxeo.fullname" . }}
+    elasticsearch.indexNumberOfReplicas={{ .Values.elasticsearch.indexNumberOfReplicas }}
+    elasticsearch.restClient.socketTimeoutMs={{ .Values.elasticsearch.restClient.socketTimeoutMs }}
+    elasticsearch.restClient.connectionTimeoutMs={{ .Values.elasticsearch.restClient.connectionTimeoutMs }}
+    {{- if .Values.elasticsearch.basicAuth.enabled }}
+    elasticsearch.restClient.username={{ .Values.elasticsearch.basicAuth.username }}
+    elasticsearch.restClient.password={{ .Values.elasticsearch.basicAuth.password }}
+    {{- end }}
+    {{- if .Values.elasticsearch.httpReadOnly.enabled }}
+    {{- if .Values.elasticsearch.basicAuth.enabled }}
+    elasticsearch.httpReadOnly.baseUrl={{ .Values.elasticsearch.protocol }}://{{ .Values.elasticsearch.basicAuth.username }}:{{ .Values.elasticsearch.basicAuth.password }}@{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}
+    {{- else }}
+    elasticsearch.httpReadOnly.baseUrl={{ .Values.elasticsearch.protocol }}://{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- if .Values.kafka.enabled }}
+    kafka.enabled=true
+    kafka.bootstrap.servers={{ .Values.kafka.host }}:{{ .Values.kafka.port }}
+    kafka.topicPrefix={{ template "nuxeo.fullname" . }}
+    nuxeo.stream.work.enabled=true
+    nuxeo.pubsub.provider=stream
+{{- end }}
+{{- if .Values.redis.enabled }}
+    nuxeo.append.templates.redis=redis
+    nuxeo.redis.host={{ .Values.redis.host }}
+    nuxeo.work.queuing=redis
+    nuxeo.redis.enabled=true
+{{- end }}
+{{- if .Values.googleCloudStorage.enabled }}
+    nuxeo.core.binarymanager=org.nuxeo.ecm.core.storage.gcp.GoogleStorageBinaryManager
+    nuxeo.gcp.project={{ .Values.googleCloudStorage.gcpProjectId }}
+    nuxeo.gcp.credentials={{ .Values.googleCloudStorage.credentials }}
+    nuxeo.gcp.storage.bucket= {{ .Values.googleCloudStorage.bucket }}
+    {{- if .Values.googleCloudStorage.bucketPrefix }}
+    nuxeo.gcp.storage.bucket_prefix={{ .Values.googleCloudStorage.bucketPrefix }}
+    {{- else }}
+    nuxeo.gcp.storage.bucket_prefix={{ template "nuxeo.fullname" . }}/
+    {{- end }}
+{{- end }}
+{{- if .Values.amazonS3.enabled }}
+    nuxeo.core.binarymanager=org.nuxeo.ecm.core.storage.sql.S3BinaryManager
+    nuxeo.aws.accessKeyId={{ .Values.amazonS3.accessKeyId }}
+    nuxeo.aws.secretKey={{ .Values.amazonS3.secretAccessKey }}
+    nuxeo.aws.region={{ .Values.amazonS3.region }}
+    nuxeo.s3storage.bucket= {{ .Values.amazonS3.bucket }}
+    {{- if .Values.amazonS3.bucketPrefix }}
+    nuxeo.s3storage.bucket_prefix={{ .Values.amazonS3.bucketPrefix }}
+    {{- else }}
+    nuxeo.s3storage.bucket_prefix={{ template "nuxeo.fullname" . }}/
+    {{- end }}
+{{- end }}
+    metrics.enabled={{ .Values.metrics.enabled }}
+{{- if .Values.metrics.enabled }}
+    metrics.streams.enabled={{ .Values.metrics.streams.enabled }}
+    {{- if .Values.metrics.stackDriver.enabled }}
+    metrics.stackdriver.enabled=true
+    metrics.stackdriver.gcpProjectId={{ .Values.metrics.stackDriver.gcpProjectId }}
+    {{- end }}
+    {{- if .Values.metrics.stackDriver.tracing.enabled }}
+    tracing.stackdriver.enabled=true
+    tracing.stackdriver.gcpProjectId={{ .Values.metrics.stackDriver.gcpProjectId }}
+    tracing.stackdriver.timeout={{ .Values.metrics.stackDriver.tracing.timeout }}
+    {{- end }}
+{{- end }}
+{{- if or (gt (int .Values.replicaCount) 1) (include "nuxeo.cloudProvider.enabled" .) }}
+    nuxeo.cluster.enabled=true
+    nuxeo.cluster.nodeid=${env:POD_UID}
+{{- end }}
+{{- if eq $nuxeoNodeType "api" }}
+    # {{ $nuxeoNodeType }} node: disable workers and stream processing
+    nuxeo.stream.processing.enabled=false
+    nuxeo.work.processing.enabled=false
+{{- else }}
+    # {{ $nuxeoNodeType }} node: enable workers and stream processing
+    nuxeo.stream.processing.enabled=true
+    nuxeo.work.processing.enabled=true
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range $key, $val := .Values.customProperties }}
+{{- with $ }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nuxeo.fullname" . }}-conf-{{ $key }}
+  labels:
+    app: {{ template "nuxeo.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: config
+data:
+  nuxeo-{{ $key }}.conf: |
+    # Helm chart properties: {{ $key }}
+{{ $val | indent 4 }}
+{{- end }}
+{{- end }}

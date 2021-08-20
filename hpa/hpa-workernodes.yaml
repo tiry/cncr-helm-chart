@@ -1,0 +1,17 @@
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nuxeo-$NAME-async-hpa
+spec:
+  maxReplicas: 5
+  minReplicas: 1
+  metrics:
+  - pods:
+      metricName: custom.googleapis.com|nuxeo|dropwizard5_nuxeo.async.load_gauge
+      selector: {}
+      targetAverageValue: 900m
+    type: Pods
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nuxeo-$NAME-worker

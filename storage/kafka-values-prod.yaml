@@ -1,0 +1,21 @@
+image:
+  tag: "2.6.0"
+replicaCount: 3
+persistence:
+  enabled: true
+serviceAccount:
+  create: false
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1024Mi"
+  limits:
+    cpu: "1"
+    memory: "1536Mi"
+zookeeper:
+  image:
+    tag: "3.6.2"
+  replicaCount: 3
+  persistence:
+    enabled: true
+deleteTopicEnable: true

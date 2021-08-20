@@ -1,0 +1,16 @@
+# https://github.com/bitnami/charts/blob/master/bitnami/mongodb/values.yaml
+
+architecture: replicaset
+useStatefulSet: true
+# avoid having an arbiter node
+replicaCount: 3
+arbiter:
+  enabled: false
+#externalAccess:
+#  enabled: true
+#  service:
+#    type: NodePort
+#    nodePorts: 
+#      - 30001
+#      - 30002
+#      - 30003

@@ -1,0 +1,4 @@
+persistence:
+  enabled: true
+plugins:
+  - grafana-piechart-panel

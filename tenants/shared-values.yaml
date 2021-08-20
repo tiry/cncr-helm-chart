@@ -1,0 +1,54 @@
+packages: 
+enable: true
+architecture: singleNode
+image:
+  repository: gcr.io/jx-preprod/nuxeo-quarkus-jvm
+enable: true
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/affinity-mode: persistent
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m
+    kubernetes.io/ingress.class: "nginx"    
+#    cert-manager.io/issuer: "letsencrypt-staging"
+replicaCount: 2
+workerCount: 1
+metrics:
+  enabled: true
+  stackdriver:
+    enabled: false
+mongodb:
+  enabled: true
+  host: nuxeo-mongodb-headless.nx-shared-storage.svc.cluster.local
+  url: nuxeo-mongodb-0.nuxeo-mongodb-headless.nx-shared-storage.svc.cluster.local:27017,nuxeo-mongodb-1.nuxeo-mongodb-headless.nx-shared-storage.svc.cluster.local:27017,nuxeo-mongodb-2.nuxeo-mongodb-headless.nx-shared-storage.svc.cluster.local:27017
+  credentials: root:XvdhfCsW6j
+elasticsearch:
+  enabled: true
+  host: elasticsearch-master.nx-shared-storage.svc.cluster.local
+kafka:
+  enabled: true
+  host: nuxeo-kafka.nx-shared-storage.svc.cluster.local
+googleCloudStorage:
+  enabled: true
+  project: "jx-preprod"
+  credentials: /opt/nuxeo/gcp/gcp-credentials.json
+  bucket: "nuxeo-multitenant-storage-bucket"
+extraSecrets:
+  gcp-sa: |-
+    gcp-credentials.json: |-
+      {
+      "type": "service_account",
+      "project_id": "jx-preprod",
+      "private_key_id": "$NXGCPPKID",
+      "private_key": "$NXGCPPK",
+      "client_email": "multitenant-nuxeo-sa@jx-preprod.iam.gserviceaccount.com",
+      "client_id": "112311918825738957815",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/multitenant-nuxeo-sa%40jx-preprod.iam.gserviceaccount.com"
+      }
+#extraVolumeMounts:   
+#  - mountPath: /opt/nuxeo/gcp
+#    name: gcpcconfig

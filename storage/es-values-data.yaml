@@ -1,0 +1,7 @@
+nodeGroup: "data"
+roles:
+  master: "false"
+  ingest: "true"
+  data: "true"
+  ml: "false"
+  remote_cluster_client: "false"

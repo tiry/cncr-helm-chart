@@ -1,0 +1,198 @@
+image:
+  repository: docker-private.packages.nuxeo.com/nuxeo/nuxeo
+  tag: latest
+  pullSecrets: []
+  # pullPolicy:
+## Nuxeo architecture, among:
+## - singleNode: a single Nuxeo node with workers and stream processing enabled
+## - api-worker:
+##   - `replicaCount` API nodes: handling HTTP requests, with workers and stream processing disabled
+##   - `workerCount` worker nodes: not handling HTTP requests, with workers and stream processing enabled
+architecture: singleNode
+replicaCount: 1
+# workerCount: 1
+clusterDomain: cluster.local
+# virtualHost:
+podLabels: {}
+podAnnotations: {}
+nodeSelector: {}
+affinity: {}
+tolerations: []
+resources:
+  requests:
+    cpu: 0.5
+    memory: 1Gi
+  limits:
+    cpu: 1
+    memory: 2Gi
+service:
+  labels: {}
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 8080
+  protocol: TCP
+  ## List of extra service ports.
+  extraPorts: []
+## List of extra `containerPort`s for the nuxeo container.
+# extraContainerPorts:
+probePath: /nuxeo/runningstatus
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  successThreshold: 1
+  failureThreshold: 5
+  timeoutSeconds: 10
+readinessProbe:
+  periodSeconds: 10
+  initialDelaySeconds: 5
+  successThreshold: 1
+  timeoutSeconds: 10
+  failureThreshold: 5
+## List of Nuxeo packages to install at startup, separated by a space.
+## For instance:
+## ```
+## packages: nuxeo-web-ui nuxeo-drive
+## ```
+# packages:
+## Nuxeo CLID, required for package installation.
+## Can be multiline, using |-.
+# clid:
+mongodb:
+  enabled: false
+  protocol: mongodb
+  # credentials:
+  # url:
+  # host:
+  port: 27017
+postgresql:
+  enabled: false
+  # host:
+  port: 5432
+  # username:
+  # password:
+elasticsearch:
+  enabled: false
+  protocol: http
+  # host:
+  port: 9200
+  clusterName: elasticsearch
+  indexNumberOfReplicas: 0
+  restClient:
+    socketTimeoutMs: 300000
+    connectionTimeoutMs: 300000
+  ## To configure Basic Authentication, see https://doc.nuxeo.com/nxdoc/cloud/elasticsearch-setup/#basic-authentication.
+  basicAuth:
+    enabled: false
+    # username:
+    # password:
+  httpReadOnly:
+    ## Alows to enable the Elasticsearch Passthrough, see https://doc.nuxeo.com/nxdoc/cloud/elasticsearch-passthrough/.
+    enabled: false
+kafka:
+  enabled: false
+  # host:
+  port: 9092
+redis:
+  enabled: false
+googleCloudStorage:
+  enabled: false
+  # gcpProjectId:
+  # credentials:
+  # bucket:
+  ## The bucket prefix needs to end with /
+  # bucketPrefix:
+amazonS3:
+  enabled: false
+  # accessKeyId:
+  # secretAccessKey:
+  # region:
+  # bucket:
+  ## The bucket prefix needs to end with /
+  # bucketPrefix:
+persistentVolumeStorage:
+  enabled: false
+  # labels: {}
+  # annotations: {}
+  # storageClass:
+  # size:
+ingress:
+  enabled: false
+  # labels: {}
+  # annotations: {}
+  # hostname:
+  # path:
+  # tls:
+logs:
+  persistence:
+    enabled: false
+    # labels: {}
+    # annotations: {}
+    # storageClass:
+    # size:
+
+## Custom properties to be appended to nuxeo.conf.
+## This is a map to allow merging several sets of properties from multiple values files.
+## The keys MUST be lowercase since they're used as a ConfigMap name.
+## The property sets are sorted by key when appended to nuxeo.conf.
+## For instance, with the `customProperties` value below and an extra-values.yaml file containing:
+## ```
+## customProperties:
+##   set2: |
+##     key1=override
+##     key3=value3
+## ```
+## running `helm install ... --values=extra-values.yaml` will result inside nuxeo.conf in:
+## ```
+## key1=value1
+## key2=value2
+## key1=override
+## key3=value3
+## ```
+# customProperties:
+#   set1: |
+#     key1=value1
+#     key2=value2
+
+## Custom environment variables to set in the container
+## customEnvs allows to define environment variables from a value or a key of a ConfigMap
+# customEnvs:
+
+## customEnvsFrom allows to load the content of a ConfigMap as environment variables
+# customEnvsFrom:
+
+metrics:
+  ## Enable global metrics, also needed for metrics reporters and tracing systems such a Stackdriver
+  enabled: true
+  streams:
+    ## Enable stream metrics reporter for Nuxeo Stream introspection
+    enabled: true
+  stackDriver:
+    ## Enable Stackdriver metrics reporter
+    enabled: false
+    # gcpProjectId:
+    tracing:
+      ## Enable Stackdriver tracing system
+      enabled: false
+      # timeout: 30s
+
+## List of extra containers to run along with the nuxeo one, aka sidecar containers.
+extraContainers: []
+extraVolumeMounts: []
+extraVolumes: []
+## Extra Opaque secrets to deploy, using non base64-encoded strings.
+## This is a map of key value pairs with the key as secret name and the value as secret data.
+## The secret data is itself a map of key value pairs, using arbitrary string values (`stringData` field).
+## For instance:
+## ```
+## extraStringSecrets:
+##   stringsecret1:
+##     key1: value1
+##     key2: value2
+##   stringsecret2:
+##     key3: |-
+##       multiline
+##       value
+## ```
+# extraStringSecrets: {}
+## Same as `extraStringSecrets` except that the secret data uses base64-encoded strings (`data` field).
+# extraSecrets: {}
