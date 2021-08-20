@@ -65,9 +65,9 @@ We use Nginx in order to be as platform-agnostic as possible.
       --selector=app.kubernetes.io/component=controller \
       --timeout=90s
 
-# Deploy the Nuxeo Cluster
+# Deploy the CNCR Cluster
 
-## Principles used to deploy multiple Nuxeo applications
+## Principles used to deploy multiple CNCR based applications
 
 ### Shared storage
 
@@ -85,17 +85,18 @@ The assumption is that the Shared Storage is deployed first, and then the Nuxeo 
 
 ### Tenant deployment
 
-Each tenant is the deployment of a new namespace containing Nuxeo pods.
+Each tenant is the deployment of a new namespace containing CNCR pods.
 
-The Nuxeo pods are running a custom Nuxeo image that contains the tenant-specific set of packages and configuration. Here, in the provided examples, all tenants run the same image and only differ by a 'tenantId' property (visible on the login screen) 
-However, nothing prevents changing the deployed image in the `tennants/*-values.yaml` : for example, this is the case for the `nuxeo-nev` tenant that uses an image with the ARender connector.
+The Nuxeo pods are running a custom Nuxeo image that contains the tenant-specific set of packages and configuration. 
+Here, in the provided examples, all tenants run the same image.
+However, nothing prevents changing the deployed image in the `tennants/*-values.yaml`.
 
 Currently, the service account used by the Nuxeo tenant to access the Storage Services is expected to have the rights to create DB, and indexes.
 
 When generating the deployment template for a tenant, the values will be taken from:
 
  - the default `values.yaml` from the chart
- - the `nuxeo-shared-values.yaml` 
+ - the `shared-values.yaml` 
     - for the configuration shared between tenants of the same cluster
  - the `<tenantId>-values.yaml` 
     - for the configuration specific to a tenant
