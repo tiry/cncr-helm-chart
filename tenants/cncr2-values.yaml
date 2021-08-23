@@ -1,15 +1,16 @@
-nameOverride: cncr1
-architecture: single
-replicaCount: 1
+nameOverride: cncr2
+architecture: api-worker
+replicaCount: 2
+workerCount: 1
 ingress:
-  hostname: cncr1.multitenant.nuxeo.com
+  hostname: cncr2.multitenant.nuxeo.com
   tls: 
     - hosts:
-      - cncr1.multitenant.nuxeo.com
+      - cncr2.multitenant.nuxeo.com
       secretName: static-wildcard-tls
 customProperties:
   tenant: |
-    nuxeo.tenantId=company-a
+    nuxeo.tenantId=company-b
     # k8s_pod vs k8s_container vs default
     nuxeo.stackdriver.forceResourceType=k8s_pod
     metrics.streams.enabled=true

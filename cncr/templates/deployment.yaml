@@ -11,6 +11,10 @@ metadata:
   name: {{ template "nuxeo.fullname" . }}{{ $nuxeoFullnameSuffix }}
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+  annotations:
+    keel.sh/policy: force
+    keel.sh/pollSchedule: '@every 1m'
+    keel.sh/trigger: poll
 spec:
   selector:
     matchLabels:
@@ -94,6 +98,10 @@ spec:
         - name: ELASTICSEARCH_EMBEDDED_ENABLED
           value: "false"  
 {{- end }}
+        - name: QUARKUS_SWAGGER-UI_ALWAYS-INCLUDE
+          value: "true"  
+        - name: QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE
+          value: "true"  
 {{- if .Values.kafka.enabled }}
         - name: KAFKA_ENABLED
           value: "true"  
@@ -107,7 +115,21 @@ spec:
           value: stream  
         - name: KAFKA_SECURITY_PROTOCOL
           value: PLAINTEXT
-{{- end }}  
+{{- end }}
+{{- if .Values.amazonS3.enabled }}
+        - name: NUXEO_CORE_BINARYMANAGER
+          value: org.nuxeo.ecm.blob.s3.S3BlobProvider
+        - name: AWS_ACCESS_KEY_ID
+          value: {{ .Values.amazonS3.awsAccessKeyId }}
+        - name: AWS_SECRET_KEYs
+          value: {{ .Values.amazonS3.awsSecretKey }}
+        - name: NUXEO_S3STORAGE_BUCKET_PREFIX
+          value: {{ template "nuxeo.fullname" . }}/
+        - name: NUXEO_S3STORAGE_BUCKET
+          value: nuxeo-multitenant-storage-bucket
+        - name: NUXEO_S3STORAGE_ENDPOINT
+          value: https://storage.googleapis.com
+{{- end }}
         - name: POD_NAME
           valueFrom:
             fieldRef:

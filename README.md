@@ -182,6 +182,12 @@ Usage of the `api-worker` architecture is useful to scale the pods according to 
  - namespace: cncr1
  - DNS: cncr1.multitenant.nuxeo.com
 
+**Tenant 2**
+
+ - description: deployment with 2 API nodes and 1 worker node
+ - namespace: cncr2
+ - DNS: cncr2.multitenant.nuxeo.com
+
 ## Testing the cluster
 
 ### https access

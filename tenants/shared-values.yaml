@@ -29,26 +29,9 @@ elasticsearch:
 kafka:
   enabled: true
   host: nuxeo-kafka.nx-shared-storage.svc.cluster.local
-googleCloudStorage:
+amazonS3:
   enabled: true
-  project: "jx-preprod"
-  credentials: /opt/nuxeo/gcp/gcp-credentials.json
   bucket: "nuxeo-multitenant-storage-bucket"
-extraSecrets:
-  gcp-sa: |-
-    gcp-credentials.json: |-
-      {
-      "type": "service_account",
-      "project_id": "jx-preprod",
-      "private_key_id": "$NXGCPPKID",
-      "private_key": "$NXGCPPK",
-      "client_email": "multitenant-nuxeo-sa@jx-preprod.iam.gserviceaccount.com",
-      "client_id": "112311918825738957815",
-      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-      "token_uri": "https://oauth2.googleapis.com/token",
-      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/multitenant-nuxeo-sa%40jx-preprod.iam.gserviceaccount.com"
-      }
-#extraVolumeMounts:   
-#  - mountPath: /opt/nuxeo/gcp
-#    name: gcpcconfig
+  awsAccessKeyId: $GCP_AWS_ACCESS_KEY_ID
+  awsSecretKey: $GCP_AWS_SECRET_KEY
+  
