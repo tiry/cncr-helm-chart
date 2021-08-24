@@ -121,7 +121,7 @@ spec:
           value: org.nuxeo.ecm.blob.s3.S3BlobProvider
         - name: AWS_ACCESS_KEY_ID
           value: {{ .Values.amazonS3.awsAccessKeyId }}
-        - name: AWS_SECRET_KEYs
+        - name: AWS_SECRET_KEY
           value: {{ .Values.amazonS3.awsSecretKey }}
         - name: NUXEO_S3STORAGE_BUCKET_PREFIX
           value: {{ template "nuxeo.fullname" . }}/
