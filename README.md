@@ -188,6 +188,12 @@ Usage of the `api-worker` architecture is useful to scale the pods according to 
  - namespace: cncr2
  - DNS: cncr2.multitenant.nuxeo.com
 
+**Tenant 4**
+
+ - description: single node deployment using rest-api branch 
+ - namespace: cncr4
+ - DNS: cncr4.multitenant.nuxeo.com
+
 ## Testing the cluster
 
 ### https access
@@ -197,6 +203,9 @@ Current CNCR only exposes 2 enpoints, CMIS and a simple Hello World:
  - https://cncr1.multitenant.nuxeo.com/json/cmis
  - https://cncr1.multitenant.nuxeo.com/hello
 
+API description is available at
+
+ - https://cncr1.multitenant.nuxeo.com/q/swagger-ui/
 
 Grafana is available on  https://grafana.multitenant.nuxeo.com/
 

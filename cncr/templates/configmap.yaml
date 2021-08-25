@@ -8,7 +8,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "nuxeo.fullname" . }}-conf{{ $nuxeoFullnameSuffix }}
+  name: {{ template "nuxeo.fullname" . }}-quarkus-conf{{ $nuxeoFullnameSuffix }}
   labels:
     app: {{ template "nuxeo.fullname" . }}
     nuxeoNode: {{ $nuxeoNodeType }}
@@ -18,14 +18,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
     role: config
 data:
-  00-nuxeo.conf: |
-    # Helm chart properties
-    nuxeo.virtual.host={{ .Values.virtualHost  }}
-    nuxeo.stream.work.log.codec=avro
-    nuxeo.stream.audit.log.codec=avro
-    nuxeo.stream.pubsub.log.codec=avro
+  application.properties: |
+    # some quarkus properties
+    # MongoDB configuration
 {{- if .Values.mongodb.enabled }}
-    nuxeo.append.templates.mongodb=mongodb
 {{- if .Values.mongodb.url }}
     nuxeo.mongodb.server={{ .Values.mongodb.protocol }}://{{ $credentials }}{{ .Values.mongodb.url }}
 {{- else}}
@@ -33,14 +29,7 @@ data:
 {{- end }}
     nuxeo.mongodb.dbname={{ template "nuxeo.fullname" . }}
 {{- end }}
-{{- if .Values.postgresql.enabled }}
-    nuxeo.append.templates.postgresql=postgresql
-    nuxeo.db.host={{ .Values.postgresql.host }}
-    nuxeo.db.port={{ .Values.postgresql.port }}
-    nuxeo.db.name={{ template "nuxeo.fullname" . }}
-    nuxeo.db.user={{ .Values.postgresql.username }}
-    nuxeo.db.password={{ .Values.postgresql.password }}
-{{- end }}
+    # Elasticsearch configuration
 {{- if .Values.elasticsearch.enabled }}
     elasticsearch.addressList={{ .Values.elasticsearch.protocol }}://{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}
     elasticsearch.clusterName={{ .Values.elasticsearch.clusterName }}
@@ -66,28 +55,11 @@ data:
     kafka.topicPrefix={{ template "nuxeo.fullname" . }}
     nuxeo.stream.work.enabled=true
     nuxeo.pubsub.provider=stream
+    kafka.security.protocol=PLAINTEXT
 {{- end }}
-{{- if .Values.redis.enabled }}
-    nuxeo.append.templates.redis=redis
-    nuxeo.redis.host={{ .Values.redis.host }}
-    nuxeo.work.queuing=redis
-    nuxeo.redis.enabled=true
-{{- end }}
-{{- if .Values.googleCloudStorage.enabled }}
-    nuxeo.core.binarymanager=org.nuxeo.ecm.core.storage.gcp.GoogleStorageBinaryManager
-    nuxeo.gcp.project={{ .Values.googleCloudStorage.gcpProjectId }}
-    nuxeo.gcp.credentials={{ .Values.googleCloudStorage.credentials }}
-    nuxeo.gcp.storage.bucket= {{ .Values.googleCloudStorage.bucket }}
-    {{- if .Values.googleCloudStorage.bucketPrefix }}
-    nuxeo.gcp.storage.bucket_prefix={{ .Values.googleCloudStorage.bucketPrefix }}
-    {{- else }}
-    nuxeo.gcp.storage.bucket_prefix={{ template "nuxeo.fullname" . }}/
-    {{- end }}
-{{- end }}
+    #Blob storage
 {{- if .Values.amazonS3.enabled }}
-    nuxeo.core.binarymanager=org.nuxeo.ecm.core.storage.sql.S3BinaryManager
-    nuxeo.aws.accessKeyId={{ .Values.amazonS3.accessKeyId }}
-    nuxeo.aws.secretKey={{ .Values.amazonS3.secretAccessKey }}
+    nuxeo.core.binarymanager=org.nuxeo.ecm.blob.s3.S3BlobProvider
     nuxeo.aws.region={{ .Values.amazonS3.region }}
     nuxeo.s3storage.bucket= {{ .Values.amazonS3.bucket }}
     {{- if .Values.amazonS3.bucketPrefix }}
@@ -95,7 +67,16 @@ data:
     {{- else }}
     nuxeo.s3storage.bucket_prefix={{ template "nuxeo.fullname" . }}/
     {{- end }}
+    {{- if .Values.amazonS3.endpoint }}
+    nuxeo.s3storage.endpoint={{ .Values.amazonS3.endpoint }}
+    {{- end }}
 {{- end }}
+    # stream config
+    nuxeo.virtual.host={{ .Values.virtualHost  }}
+    #nuxeo.stream.work.log.codec=avro
+    #nuxeo.stream.audit.log.codec=avro
+    #nuxeo.stream.pubsub.log.codec=avro
+    # metrics
     metrics.enabled={{ .Values.metrics.enabled }}
 {{- if .Values.metrics.enabled }}
     metrics.streams.enabled={{ .Values.metrics.streams.enabled }}
@@ -109,9 +90,10 @@ data:
     tracing.stackdriver.timeout={{ .Values.metrics.stackDriver.tracing.timeout }}
     {{- end }}
 {{- end }}
+    # cluster config
 {{- if or (gt (int .Values.replicaCount) 1) (include "nuxeo.cloudProvider.enabled" .) }}
-    nuxeo.cluster.enabled=true
-    nuxeo.cluster.nodeid=${env:POD_UID}
+    __nuxeo.cluster.enabled=true
+    __nuxeo.cluster.nodeid=${env:POD_UID}
 {{- end }}
 {{- if eq $nuxeoNodeType "api" }}
     # {{ $nuxeoNodeType }} node: disable workers and stream processing
@@ -122,8 +104,10 @@ data:
     nuxeo.stream.processing.enabled=true
     nuxeo.work.processing.enabled=true
 {{- end }}
+
 {{- end }}
 {{- end }}
+
 {{- range $key, $val := .Values.customProperties }}
 {{- with $ }}
 ---

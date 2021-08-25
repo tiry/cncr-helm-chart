@@ -79,56 +79,11 @@ spec:
           timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
           failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
         env:
-{{- if .Values.mongodb.url }}
-        - name: NUXEO_MONGODB_SERVER
-          value: {{ .Values.mongodb.protocol }}://{{ $credentials }}{{ .Values.mongodb.url }}
-{{- else}}
-        - name: NUXEO_MONGODB_SERVER
-          value: {{ .Values.mongodb.protocol }}://{{ $credentials }}{{ .Values.mongodb.host }}:{{ .Values.mongodb.port }}
-{{- end }}
-        - name: NUXEO_MONGODB_DBNAME
-          value: {{ template "nuxeo.fullname" . }}  
-{{- if .Values.elasticsearch.enabled }}
-        - name: ELASTICSEARCH_ADDRESSLIST
-          value: {{ .Values.elasticsearch.protocol }}://{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}  
-        - name: ELASTICSEARCH_CLUSTERNAME
-          value: {{ .Values.elasticsearch.clusterName }}  
-        - name: ELASTICSEARCH_INDEXNAME
-          value: {{ template "nuxeo.fullname" . }}  
-        - name: ELASTICSEARCH_EMBEDDED_ENABLED
-          value: "false"  
-{{- end }}
-        - name: QUARKUS_SWAGGER-UI_ALWAYS-INCLUDE
-          value: "true"  
-        - name: QUARKUS_SWAGGER_UI_ALWAYS_INCLUDE
-          value: "true"  
-{{- if .Values.kafka.enabled }}
-        - name: KAFKA_ENABLED
-          value: "true"  
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          value: {{ .Values.kafka.host }}:{{ .Values.kafka.port }} 
-        - name: KAFKA_TOPICPREFIX
-          value: {{ template "nuxeo.fullname" . }} 
-        - name: NUXEO_STREAM_WORK_ENABLED
-          value: "true"  
-        - name: NUXEO_PUBSUB_PROVIDER
-          value: stream  
-        - name: KAFKA_SECURITY_PROTOCOL
-          value: PLAINTEXT
-{{- end }}
 {{- if .Values.amazonS3.enabled }}
-        - name: NUXEO_CORE_BINARYMANAGER
-          value: org.nuxeo.ecm.blob.s3.S3BlobProvider
         - name: AWS_ACCESS_KEY_ID
-          value: {{ .Values.amazonS3.awsAccessKeyId }}
+          value: {{ .Values.amazonS3.accessKeyId }}
         - name: AWS_SECRET_KEY
-          value: {{ .Values.amazonS3.awsSecretKey }}
-        - name: NUXEO_S3STORAGE_BUCKET_PREFIX
-          value: {{ template "nuxeo.fullname" . }}/
-        - name: NUXEO_S3STORAGE_BUCKET
-          value: nuxeo-multitenant-storage-bucket
-        - name: NUXEO_S3STORAGE_ENDPOINT
-          value: https://storage.googleapis.com
+          value: {{ .Values.amazonS3.secretKey }}
 {{- end }}
         - name: POD_NAME
           valueFrom:
@@ -142,17 +97,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-{{- if .Values.XXXclid }}
-        - name: NUXEO_CLID
-          valueFrom:
-            secretKeyRef:
-              name: {{ template "nuxeo.fullname" . }}-instance-clid
-              key: CLID
-{{- end }}
-{{- if .Values.packages }}
-        - name: NUXEO_PACKAGES
-          value: {{ .Values.packages }}
-{{- end }}
 {{- if .Values.customEnvs }}
 {{ toYaml .Values.customEnvs | indent 8 }}
 {{- end }}
@@ -161,9 +105,10 @@ spec:
 {{ toYaml .Values.customEnvsFrom | indent 8 }}
 {{- end }}
         volumeMounts:
-          - name: nuxeoconf
-            mountPath: /etc/nuxeo/conf.d/00-nuxeo.conf
-            subPath: 00-nuxeo.conf
+          - name: quarkusconf
+            mountPath: /deployments/nuxeo/config/application.properties
+            subPath: application.properties
+            readOnly: false
           {{- range $key, $val := .Values.customProperties }}
           {{- with $ }}
           - name: nuxeoconf-{{ $key }}
@@ -207,9 +152,9 @@ spec:
       securityContext:
         fsGroup: 1000
       volumes:
-      - name: nuxeoconf
+      - name: quarkusconf
         configMap:
-          name: {{ template "nuxeo.fullname" . }}-conf{{ $nuxeoFullnameSuffix }}
+          name: {{ template "nuxeo.fullname" . }}-quarkus-conf{{ $nuxeoFullnameSuffix }}
       {{- range $key, $val := .Values.customProperties }}
       {{- with $ }}
       - name: nuxeoconf-{{ $key }}
