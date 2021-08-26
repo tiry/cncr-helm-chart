@@ -3,6 +3,7 @@ architecture: single
 replicaCount: 1
 image:
   tag: latest-rest-api
+  keel: false
 ingress:
   hostname: cncr4.multitenant.nuxeo.com
   tls: 

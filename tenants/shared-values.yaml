@@ -3,6 +3,7 @@ enable: true
 architecture: singleNode
 image:
   repository: gcr.io/jx-preprod/nuxeo-quarkus-jvm
+  keel: true
 enable: true
 ingress:
   enabled: true
@@ -32,6 +33,6 @@ kafka:
 amazonS3:
   enabled: true
   bucket: "nuxeo-multitenant-storage-bucket"
-  awsAccessKeyId: $GCP_AWS_ACCESS_KEY_ID
-  awsSecretKey: $GCP_AWS_SECRET_KEY
-  
+  accessKeyId: $GCP_AWS_ACCESS_KEY_ID
+  secretKey: $GCP_AWS_SECRET_KEY
+  endpoint: https://storage.googleapis.com

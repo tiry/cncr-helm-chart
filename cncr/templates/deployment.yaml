@@ -12,9 +12,11 @@ metadata:
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
   annotations:
+{{- if .Values.image.keel }}    
     keel.sh/policy: force
     keel.sh/pollSchedule: '@every 1m'
     keel.sh/trigger: poll
+{{- end }}
 spec:
   selector:
     matchLabels:
